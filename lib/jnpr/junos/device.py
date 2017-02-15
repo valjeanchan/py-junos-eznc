@@ -869,6 +869,10 @@ class Device(_Connection):
         :param bool normalize:
             *OPTIONAL* default is ``False``.  If ``True`` then the
             XML returned by :meth:`execute` will have whitespace normalized
+
+        :param socket sock:
+            *OPTIONAL* default is ``None``.
+            socket returned by :meth:`socket.accept` for outbound-ssh connection
         """
 
         # ----------------------------------------
@@ -877,6 +881,7 @@ class Device(_Connection):
 
         hostname = vargs[0] if len(vargs) else kvargs.get('host')
 
+        self._sock = kvargs.get('sock', None)
         self._port = kvargs.get('port', 830)
         self._gather_facts = kvargs.get('gather_facts', True)
         self._normalize = kvargs.get('normalize', False)
@@ -901,7 +906,7 @@ class Device(_Connection):
             # --------------------------
             # making a remote connection
             # --------------------------
-            if hostname is None:
+            if hostname is None and self._sock is None:
                 raise ValueError("You must provide the 'host' value")
             self._hostname = hostname
             # user will default to $USER
@@ -1006,6 +1011,7 @@ class Device(_Connection):
                 key_filename=self._ssh_private_key_file,
                 allow_agent=allow_agent,
                 ssh_config=self._sshconf_lkup(),
+                sock=self._sock,
                 device_params={'name': 'junos', 'local': False})
 
         except NcErrors.AuthenticationError as err:
